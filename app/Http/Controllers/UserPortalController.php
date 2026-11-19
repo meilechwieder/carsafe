@@ -34,6 +34,20 @@ use Illuminate\Support\Str;
 class UserPortalController extends Controller
 {
 
+    /**
+     * CSF-1001: drop blank entries from the phone restriction list; an empty list is stored as null.
+     */
+    public static function cleanRestrictedPhones($phones)
+    {
+        $clean = array_values(array_filter(array_map(function ($p) {
+            return preg_replace('/\D/', '', (string) $p);
+        }, (array) $phones), function ($p) {
+            return $p !== '';
+        }));
+        return count($clean) ? json_encode($clean) : null;
+    }
+
+
     public function login(){
 
         return view('customer.login');
@@ -465,7 +479,7 @@ if (!$record) {
         $account->pins = $request->pins ? $request->pins : null;
 
         $account->is_trip_restricted_by_phone = $request->is_trip_restricted_by_phone ? 1 : 0;
-        $account->restricted_phones = $request->is_trip_restricted_by_phone ? json_encode($request->restricted_phones) : null;
+        $account->restricted_phones = $request->is_trip_restricted_by_phone ? self::cleanRestrictedPhones($request->restricted_phones) : null;
         $account->save();
 
         DB::commit();

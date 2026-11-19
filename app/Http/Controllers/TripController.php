@@ -268,12 +268,13 @@ class TripController extends Controller
             DB::beginTransaction();
         if ($request->has('trip')) {
 
-            $trip = Trip::where('trip_id', $request->trip)->first();
+            // CSF-1001: lock the trip so a double-tapped/resent payment waits for the first one and is then rejected
+            $trip = Trip::where('trip_id', $request->trip)->lockForUpdate()->first();
             $existingPayment = Payment::where('trip_id', $trip->trip_id)->where('user_type', 'driver')
                 ->where('type', 'credit')->where('is_delete', 0)->first();
 
             if ($existingPayment) {
-
+                DB::rollBack();
                 return $this->respond($request, false, 'Payment already exists for this trip.');
 
             }
@@ -2411,11 +2412,13 @@ class TripController extends Controller
             if ($request->has('trip')) {
 
 
-                $trip = Trip::find($request->trip);
+                // CSF-1001: lock the trip so a duplicate submit waits and is then rejected
+                $trip = Trip::where('id', $request->trip)->lockForUpdate()->first();
                 $existingPayment = Payment::where('trip_id', $trip->trip_id)->where('user_type', 'driver')
                     ->where('type', 'credit')->where('is_delete', 0)->first();
 
                 if ($existingPayment) {
+                    DB::rollBack();
                     return redirect()->back()->with('error', 'Payment already exists for this trip.');
                 }
                 $trip->temp_data = $tempData;

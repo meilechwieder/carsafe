@@ -37,6 +37,20 @@ use App\Models\Apikey;
 
 class AccountController extends Controller
 {
+
+    /**
+     * CSF-1001: drop blank entries from the phone restriction list; an empty list is stored as null.
+     */
+    public static function cleanRestrictedPhones($phones)
+    {
+        $clean = array_values(array_filter(array_map(function ($p) {
+            return preg_replace('/\D/', '', (string) $p);
+        }, (array) $phones), function ($p) {
+            return $p !== '';
+        }));
+        return count($clean) ? json_encode($clean) : null;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -299,7 +313,7 @@ class AccountController extends Controller
         $account->invoice_email_day = $request->invoice_email_day ? $request->invoice_email_day : 1;
         $account->invoice_email_time = $request->invoice_email_time ? 1 : 0;
         $account->is_trip_restricted_by_phone = $request->is_trip_restricted_by_phone ? 1 : 0;
-        $account->restricted_phones = $request->is_trip_restricted_by_phone ? json_encode($request->restricted_phones) : null;
+        $account->restricted_phones = $request->is_trip_restricted_by_phone ? self::cleanRestrictedPhones($request->restricted_phones) : null;
 
         $account->save();
 
@@ -463,7 +477,7 @@ class AccountController extends Controller
         $account->invoice_email_day = $request->invoice_email_day ? $request->invoice_email_day : 1;
         $account->invoice_email_time = $request->invoice_email_time ? 1 : 0;
         $account->is_trip_restricted_by_phone = $request->is_trip_restricted_by_phone ? 1 : 0;
-        $account->restricted_phones = $request->is_trip_restricted_by_phone ? json_encode($request->restricted_phones) : null;
+        $account->restricted_phones = $request->is_trip_restricted_by_phone ? self::cleanRestrictedPhones($request->restricted_phones) : null;
 
         if (isset($request->change_pass)) {
             $account->password = Hash::make($request->password);

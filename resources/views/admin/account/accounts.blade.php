@@ -579,6 +579,29 @@
             if (!this.checked) phoneInputs.innerHTML = ""; // clear if unchecked
         });
 
+        // CSF-1001: each restricted phone has a remove button and may be left blank
+        function wrapPhoneInput(input) {
+            input.required = false;
+            const row = document.createElement("div");
+            row.className = "restricted-phone-row";
+            row.style.display = "flex";
+            row.style.gap = "6px";
+            row.style.alignItems = "center";
+            row.style.marginBottom = "8px";
+            input.style.display = "block";
+            input.style.marginBottom = "0";
+            input.parentNode.insertBefore(row, input);
+            row.appendChild(input);
+            const rm = document.createElement("button");
+            rm.type = "button";
+            rm.className = "btn btn-sm btn-outline-danger";
+            rm.title = "Remove this number";
+            rm.innerHTML = "&times;";
+            rm.addEventListener("click", function() { row.remove(); });
+            row.appendChild(rm);
+        }
+        phoneInputs.querySelectorAll("input").forEach(wrapPhoneInput);
+
         addBtn.addEventListener("click", function() {
             const currentCount = phoneInputs.querySelectorAll("input").length;
             if (currentCount < 10) {
@@ -587,11 +610,10 @@
                 input.name = "restricted_phones[]";
                 input.pattern = "\\d{10}";
                 input.placeholder = "10-digit phone";
-                input.required = true;
                 input.maxLength = 10;
-                input.style.display = "block";
                 input.classList = "form-control";
                 phoneInputs.appendChild(input);
+                wrapPhoneInput(input);
             } else {
                 alert("You can only add up to 10 numbers.");
             }
