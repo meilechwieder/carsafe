@@ -33,6 +33,11 @@
                                 {{ session('error') }}
                             </div>
                         @endif
+                        @if (session('warning'))
+                            <div class="alert alert-warning">
+                                {{ session('warning') }}
+                            </div>
+                        @endif
                     </div>
                     <form action="{{url('admin/add-payment')}}?is_admin=1" method="post" id="payment_form" onsubmit="disableButton()">
                         @csrf

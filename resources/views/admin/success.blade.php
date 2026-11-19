@@ -34,6 +34,11 @@
           {{ session('error') }}
           </div>
         @endif
+              @if (session('warning'))
+          <div class="alert alert-warning">
+          {{ session('warning') }}
+          </div>
+        @endif
               <img src="assets/images/svg-icon/check-circle.svg" class="img-fluid" width="200px" alt="" srcset="">
               <h3>Trip has been paid</h3>
               @if(isset($paid_cost))

@@ -107,6 +107,11 @@
         <!-- Page Sidebar Ends-->
         <div class="page-body">
           <div class="container-fluid">
+          @if (session('warning'))
+            <div class="alert alert-warning mt-3" role="alert">
+              {{ session('warning') }}
+            </div>
+          @endif
 
           @yield('content')
 
@@ -166,11 +171,15 @@
         <script src="{{asset('assets/js/card-js.min.js')}}"></script>
         <script>
             @if (session('success'))
-            toastr.success("{{ session('success') }}");
+            toastr.success(@json(session('success')));
             @endif
 
             @if (session('error'))
-            toastr.warning("{{ session('error') }}");
+            toastr.warning(@json(session('error')));
+            @endif
+
+            @if (session('warning'))
+            toastr.warning(@json(session('warning')));
             @endif
         </script>
     @yield('js')

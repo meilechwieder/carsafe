@@ -330,7 +330,9 @@ $util = new \App\Utils\dateUtil();
                     var tripRow = $('tr[data-trip-id="' + response.trip_id + '"]');
                     tripRow.find('.account-td').text(response.method + " Acc#: " + response.account);
 
-
+                    if (response.warning) {
+                        alert(response.warning);
+                    }
 
                     $('#extraModaledit').modal('hide');
                 },

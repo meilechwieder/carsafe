@@ -20,6 +20,7 @@ use App\Services\EmailService;
 use App\Services\LogService;
 use App\Services\CubeContact;
 use App\Services\PaymentSaveService;
+use App\Services\PhoneRestriction;
 use App\Services\GoCabService;
 use App\Services\TokenService;
 use Carbon\Carbon;
@@ -320,24 +321,12 @@ class TripController extends Controller
             }
 
 
-            if ($account->is_trip_restricted_by_phone == 1) {
-                if (!empty($account->restricted_phones)) {
-                    $phone = $trip->passenger_phone;
-
-                    $phone = preg_replace('/\D/', '', $phone);
-                    if (strlen($phone) === 11 && str_starts_with($phone, '1')) {
-                        $phone = substr($phone, 1);
-                    }
-                    $to_match = $phone;
-                    $allowed_phones = json_decode($account->restricted_phones, true); // decode to array
-
-                    $matched = in_array($to_match, $allowed_phones);
-
-                    if (!$matched) {
-                        return $this->respond($request, false, 'Trip is not allowed based on your phone restriction.');
-
-                        //return redirect()->back()->with('error', 'Trip is not allowed based on your phone restriction.');
-                    }
+            // Phone restrictions still block drivers and dispatchers. Administrators get a warning and can proceed.
+            if (!PhoneRestriction::phoneIsAllowed($account, $trip->passenger_phone)) {
+                if (PhoneRestriction::isActingAdministrator($request)) {
+                    session()->now('warning', PhoneRestriction::WARNING);
+                } else {
+                    return $this->respond($request, false, PhoneRestriction::BLOCK_MESSAGE);
                 }
             }
 
@@ -1882,6 +1871,17 @@ class TripController extends Controller
         $trip_id = $request->trip_id;
         $trip = Trip::where('trip_id', $trip_id)->first();
 
+        $phoneRestrictionWarning = null;
+        if (
+            $account
+            && $request->payment_method == 'account'
+            && $trip
+            && !PhoneRestriction::phoneIsAllowed($account, $trip->passenger_phone)
+            && PhoneRestriction::isActingAdministrator($request)
+        ) {
+            $phoneRestrictionWarning = PhoneRestriction::WARNING;
+        }
+
         $old_account = $trip->account_number;
         $oold_account = Account::where('account_id', $old_account)->first();
         if ($oold_account) {
@@ -2032,7 +2032,8 @@ class TripController extends Controller
             'account' => $trip->account_number,
             'method' => $trip->payment_method,
             'trip_id' => $trip_id,
-            'pin' => $trip->cube_pin_status
+            'pin' => $trip->cube_pin_status,
+            'warning' => $phoneRestrictionWarning,
 
         ]);
         //return redirect()->back()->with('success', 'Trip cost has updated successfully');

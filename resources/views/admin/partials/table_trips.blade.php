@@ -339,6 +339,10 @@ $(document).off('click', '.account_form_submit_btn').on('click', '.account_form_
             tripRow.find('.account-td').text(response.account);
             tripRow.find('.method-td').text(response.method);
 
+            if (response.warning) {
+                alert(response.warning);
+            }
+
             $('#extraModaledit').modal('hide');
         },
         error: function(error) {
