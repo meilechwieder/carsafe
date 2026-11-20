@@ -477,13 +477,10 @@ Route::get("trips_tc/{from}", function($from){
     foreach ($trips as $trip){
 
 
-        if($trip->{'stops'} != '' && $trip->{'stops'} != null){
-            $to_location = $trip->{'stops'};
-
-        }else{
-            $to_location = $trip->{'route.drop_off_text'};
-
-        }
+        // CSF-1002: destination is the drop-off; stops are kept in stop_location, never used as the destination
+        $to_location = !empty($trip->{'route.drop_off_text'})
+            ? $trip->{'route.drop_off_text'}
+            : ($trip->{'stops'} ?? '');
 
         Trip::where('trip_id',(int)$trip->{'id'})->update(['location_to'=>$to_location]);
 

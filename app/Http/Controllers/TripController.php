@@ -3007,9 +3007,10 @@ class TripController extends Controller
 
                     $existingTrip = Trip::where('trip_id', (int) $trip->{'id'})->first();
 
-                    $to_location = !empty($trip->{'stops'})
-                        ? $trip->{'stops'}
-                        : $trip->{'route.drop_off_text'};
+                    // CSF-1002: destination is the drop-off; stops are kept in stop_location, never used as the destination
+                    $to_location = !empty($trip->{'route.drop_off_text'})
+                        ? $trip->{'route.drop_off_text'}
+                        : ($trip->{'stops'} ?? '');
 
                     if ($existingTrip) {
                         if ($existingTrip->payment_method === 'cash' && empty($existingTrip->temp_data)) {
