@@ -18,6 +18,7 @@ use App\Services\CustomPagination;
 use App\Services\DiscountService;
 use App\Services\EmailService;
 use App\Services\LogService;
+use App\Services\AccountChargeFailureLogger;
 use App\Services\CubeContact;
 use App\Services\PaymentSaveService;
 use App\Services\PhoneRestriction;
@@ -261,7 +262,27 @@ class TripController extends Controller
         return redirect()->back()->with('error', $message);
     }
 
+    /** Context for AccountChargeFailureLogger, filled by updateHandle (logging only). */
+    protected $acfContext = [];
+
+    /**
+     * Payment from the driver/admin payment screen. Wraps updateHandle to log failed
+     * "put on account" attempts; the response (or exception) is passed through unchanged.
+     */
     public function update(Request $request)
+    {
+        $this->acfContext = [];
+        try {
+            $response = $this->updateHandle($request);
+        } catch (\Throwable $e) {
+            AccountChargeFailureLogger::fromException($request, $e, $this->acfContext);
+            throw $e;
+        }
+        AccountChargeFailureLogger::fromResponse($request, $response, $this->acfContext);
+        return $response;
+    }
+
+    private function updateHandle(Request $request)
     {
 
 
@@ -470,6 +491,7 @@ class TripController extends Controller
                             //return view('driver.success', compact('trip_id', 'paid_cost'));
                         }
                     } else {
+                        $this->acfContext['cardknox_declined'] = (is_array($charge) && !empty($charge['message'])) ? (string) $charge['message'] : ($charge ? 'declined' : 'no card on file');
 
                         if ($account->status == 1) {
 
@@ -1377,6 +1399,7 @@ class TripController extends Controller
             }
         }
         } catch (\Throwable $e){
+            $this->acfContext['exception'] = $e;
             DB::rollBack();
 
     if ($request->expectsJson()) {

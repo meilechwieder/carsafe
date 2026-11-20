@@ -51,6 +51,9 @@ Route::group(['prefix' => 'admin','as' => 'admin.'], function () {
 
 Route::group(['middleware' => 'admin.auth'], function () {
 
+        // Failed "put on account" attempts (admins only)
+        Route::get('/account-charge-failures', [\App\Http\Controllers\AccountChargeFailureController::class, 'index'])->middleware('admin.only')->name('account-charge-failures');
+
         Route::get('/finance', [AdminController::class, 'finance']);
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
         Route::get('/drivers', [AdminController::class, 'drivers'])->name('drivers.index');

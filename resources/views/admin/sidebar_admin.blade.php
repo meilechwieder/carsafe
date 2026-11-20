@@ -74,6 +74,7 @@
                     <ul class="sidebar-submenu">
                         <li><a class="lan-" href="{{url('admin/driver_complaints')}}">Driver Complaints</a></li>
                         <li><a class="lan-" href="{{url('admin/accounts/complaints')}}">Account Complaints</a></li>
+                        <li><a class="lan-" href="{{url('admin/account-charge-failures')}}">Failed Account Attempts</a></li>
                         <li><a class="lan-" href="{{url('admin/trips_complaint')}}">Trips With Complaint</a></li>
 
                     </ul>
