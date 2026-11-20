@@ -914,7 +914,7 @@ public function getWebHookTrip(Request $request)
             $cardNumber = trim($request->card_number);
             $maskedCard = substr($cardNumber, 0, 1) . str_repeat('*', strlen($cardNumber) - 5) . substr($cardNumber, -4);
             $creditCard->card_number = $maskedCard;
-            $creditCard->cvc = $request->cvc;
+            $creditCard->cvc = null; // CVCs are never stored
 
             // Process expiry date safely (support 1 or 2 digit month, 2 or 4 digit year)
             $month = str_pad(trim($request->expiry_month), 2, '0', STR_PAD_LEFT);

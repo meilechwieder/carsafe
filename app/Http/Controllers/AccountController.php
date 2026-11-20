@@ -285,8 +285,8 @@ class AccountController extends Controller
         }
 
         $creditCard = new CreditCard;
-        $creditCard->card_number = $request->card_number;
-        $creditCard->cvc = $request->cvc;
+        $creditCard->card_number = CreditCard::maskCardNumber($request->card_number);
+        $creditCard->cvc = null; // CVCs are never stored
         $creditCard->expiry = $expiryDate;
         $creditCard->cardnox_token = $cardResponse['data']['xToken'];
 
@@ -379,8 +379,8 @@ class AccountController extends Controller
 
                 if ($secondaryResponse['status']) {
                     $secondaryCard = new CreditCard();
-                    $secondaryCard->card_number = $request->secondary_card_number;
-                    $secondaryCard->cvc = $request->secondary_cvc;
+                    $secondaryCard->card_number = CreditCard::maskCardNumber($request->secondary_card_number);
+                    $secondaryCard->cvc = null; // CVCs are never stored
                     $secondaryCard->expiry = $secExpiryDate;
                     $secondaryCard->cardnox_token = $secondaryResponse['data']['xToken'];
                     $secondaryCard->charge_priority = 0;
@@ -875,8 +875,8 @@ class AccountController extends Controller
 
                         $new = new CreditCard;
                         $new->account_id = $account->account_id;
-                        $new->card_number = $request->card_number;
-                        $new->cvc = $request->cvc;
+                        $new->card_number = CreditCard::maskCardNumber($request->card_number);
+                        $new->cvc = null; // CVCs are never stored
                         $expiry = $request->input('expiry');
 
                         list($month, $year) = explode('/', $expiry);
@@ -918,8 +918,8 @@ class AccountController extends Controller
 
                         $new = new CreditCard;
                         $new->account_id = $account->account_id;
-                        $new->account_number = $request->ach_account_number;
-                        $new->routing_number = $request->routing_number;
+                        $new->account_number = CreditCard::maskBankNumber($request->ach_account_number);
+                        $new->routing_number = CreditCard::maskBankNumber($request->routing_number);
                         $new->type = 'ach';
                         $new->cardnox_token = $cardResponse['data']['xToken'];
 
@@ -1358,8 +1358,8 @@ class AccountController extends Controller
 
                 $new = new CreditCard;
                 $new->account_id = $account->account_id;
-                $new->card_number = $request->card_number;
-                $new->cvc = $request->cvc;
+                $new->card_number = CreditCard::maskCardNumber($request->card_number);
+                $new->cvc = null; // CVCs are never stored
                 $new->cardnox_token = $cardResponse['data']['xToken'];
                 $new->expiry = $expiryDate;
                 $new->charge_priority = 0;
@@ -1659,7 +1659,7 @@ class AccountController extends Controller
                                 $amuntWithfee,
                                 $account->account_id . '-amountActual' . $total_payments
                             );
-                            Log::info('retry token tryingg = ' . $token->cardnox_token . ' charged ' . $fillAndDeduct['status']);
+                            Log::info('retry token tryingg = ' . 'card #' . $token->id . ' charged ' . $fillAndDeduct['status']);
 
                             if ($fillAndDeduct['status'] === 'approved') {
                                 break;

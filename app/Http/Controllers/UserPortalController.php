@@ -319,6 +319,18 @@ if (!$record) {
         $creditcard->account_name = $request->account_name;
 
 
+        // Stored numbers are masked. If the masked number was submitted unchanged, keep the
+        // saved Cardknox token (and its expiry) and only update name / priority. Re-tokenizing
+        // needs the full card number typed in again.
+        if (CreditCard::isMasked($request->card_number)) {
+            $creditcard->charge_priority = $request->charge_priority;
+            $creditcard->save();
+            if ($request->charge_priority == 1) {
+                CreditCard::where('account_id', $creditcard->account_id)->where('id', '!=', $creditcard->id)->update(['charge_priority' => 0]);
+            }
+            return redirect()->back()->with('success','Updated Successfully');
+        }
+
         $expiry = $request->input('expiry');
         list($month, $year) = explode('/', $expiry);
         $fullYear = '20' . $year;
@@ -337,9 +349,9 @@ if (!$record) {
 
         if ($cardResponse['status']) {
 
-            $creditcard->card_number = $request->card_number;
+            $creditcard->card_number = CreditCard::maskCardNumber($request->card_number);
             $creditcard->expiry = $expiryDate;
-            $creditcard->cvc = $request->cvc;
+            $creditcard->cvc = null; // CVCs are never stored
             $creditcard->cardnox_token = $cardResponse['data']['xToken'];
             $creditcard->charge_priority = $request->charge_priority;
             $creditcard->save();

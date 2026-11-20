@@ -172,5 +172,39 @@ class Trip extends Model
     {
         return !empty($this->gocab_payment_id) && $this->gocab_status === 'COVERED';
     }
+
+    /**
+     * The SCN card field is sometimes typed with a real payment card number by mistake.
+     * Never store one: a 13-19 digit Luhn-valid number is saved masked (first digit + last 4).
+     * Normal SCN card numbers (shorter IDs) are stored unchanged.
+     */
+    public function setGocabCardNumberAttribute($value)
+    {
+        if ($value !== null) {
+            $digits = preg_replace('/[\s\-]/', '', (string) $value);
+            if (preg_match('/^\d{13,19}$/', $digits) && self::passesLuhn($digits)) {
+                $value = \App\Models\CreditCard::maskCardNumber($digits);
+            }
+        }
+        $this->attributes['gocab_card_number'] = $value;
+    }
+
+    private static function passesLuhn(string $digits): bool
+    {
+        $sum = 0;
+        $alt = false;
+        for ($i = strlen($digits) - 1; $i >= 0; $i--) {
+            $d = (int) $digits[$i];
+            if ($alt) {
+                $d *= 2;
+                if ($d > 9) {
+                    $d -= 9;
+                }
+            }
+            $sum += $d;
+            $alt = !$alt;
+        }
+        return $sum % 10 === 0;
+    }
 }
 

@@ -241,7 +241,7 @@ class PaymentSaveService
                                 $amuntWithfee,
                                 $account->account_id . '-amountActual' . $total_payments
                             );
-                            Log::Info('token tryingg = ' . $token->cardnox_token . ' charged ' . $fillAndDeduct['status']);
+                            Log::Info('token tryingg = ' . 'card #' . $token->id . ' charged ' . $fillAndDeduct['status']);
 
                             if ($fillAndDeduct['status'] === 'approved') {
                                 break;
@@ -441,7 +441,7 @@ class PaymentSaveService
                                 $account->account_id . '-amountActual' . $total_payments
                             );
 
-                            Log::info('Token Attempt: ' . $token->cardnox_token . ' charged ' . $fillAndDeduct['status']);
+                            Log::info('Token Attempt: ' . 'card #' . $token->id . ' charged ' . $fillAndDeduct['status']);
 
                             if ($fillAndDeduct['status'] === 'approved') {
                                 break;

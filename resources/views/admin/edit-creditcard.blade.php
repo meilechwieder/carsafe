@@ -39,7 +39,7 @@
                                     <div class="col-6">
                                         <label for="">CVC</label>
                                         <input type="number" class="form-control" name="cvc"
-                                               value="{{$creditcard->cvc}}">
+                                               value="" placeholder="Not stored">
                                     </div>
                                     <div class="col-6">
                                         <label for="">Expiry</label>

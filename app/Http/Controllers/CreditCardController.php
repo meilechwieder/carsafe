@@ -64,8 +64,8 @@ class CreditCardController extends Controller
         if ($request->type === 'ach') {
 
             $account = Account::where('account_id',$request->account_id)->first();
-            $creditCard->account_number = $request->account_number;
-            $creditCard->routing_number = $request->routing_number;
+            $creditCard->account_number = CreditCard::maskBankNumber($request->account_number);
+            $creditCard->routing_number = CreditCard::maskBankNumber($request->routing_number);
             $creditCard->type = 'ach';
 
             $cardResponse = CardKnoxService::saveAch(
@@ -82,7 +82,7 @@ class CreditCardController extends Controller
             $maskedCard = substr($cardNumber, 0, 1) . str_repeat('*', strlen($cardNumber) - 5) . substr($cardNumber, -4);
 
             $creditCard->card_number = $maskedCard;
-            $creditCard->cvc = $request->cvc;
+            $creditCard->cvc = null; // CVCs are never stored
             // Process expiry date
             // $expiry = $request->input('expiry');
 
@@ -217,6 +217,18 @@ $expiryWithoutSlash = sprintf('%02d%02d', $month, $year);
         $creditcard->account_name = $request->account_name;
 
 
+        // Stored numbers are masked. If the masked number was submitted unchanged, keep the
+        // saved Cardknox token (and its expiry) and only update name / priority. Re-tokenizing
+        // needs the full card number typed in again.
+        if (CreditCard::isMasked($request->card_number)) {
+            $creditcard->charge_priority = $request->charge_priority;
+            $creditcard->save();
+            if ($request->charge_priority == 1) {
+                CreditCard::where('account_id', $creditcard->account_id)->where('id', '!=', $creditcard->id)->update(['charge_priority' => 0]);
+            }
+            return redirect(url('admin/accounts/cards'))->with("success", "Card is updated");
+        }
+
         $expiry = $request->input('expiry');
         list($month, $year) = explode('/', $expiry);
         $fullYear = '20' . $year;
@@ -235,9 +247,9 @@ $expiryWithoutSlash = sprintf('%02d%02d', $month, $year);
 
         if ($cardResponse['status']) {
 
-            $creditcard->card_number = $request->card_number;
+            $creditcard->card_number = CreditCard::maskCardNumber($request->card_number);
             $creditcard->expiry = $expiryDate;
-            $creditcard->cvc = $request->cvc;
+            $creditcard->cvc = null; // CVCs are never stored
             $creditcard->cardnox_token = $cardResponse['data']['xToken'];
             $creditcard->charge_priority = $request->charge_priority;
             $creditcard->save();
