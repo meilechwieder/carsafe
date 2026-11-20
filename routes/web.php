@@ -35,10 +35,13 @@ use App\Models\Trip;
 admin dashboard routes starts
 */
 
-Route::get('phpinfo', function () {
-    phpinfo();
+// Debug/maintenance pages: administrators only (were public).
+Route::middleware('admin.only')->group(function () {
+    Route::get('phpinfo', function () {
+        phpinfo();
+    });
+    Route::get('process', [TripController::class, 'processPrepaidAccountDeductions']);
 });
-Route::get('process', [TripController::class, 'processPrepaidAccountDeductions']);
 
 Route::group(['prefix' => 'admin','as' => 'admin.'], function () {
 
@@ -315,7 +318,10 @@ Route::group(['prefix' => 'customer','as' => 'customer.'], function () {
     Route::post('/qr-code', [ApikeyController::class, 'generateCodeApiKey'])->name('customer.qr.generate');
 });
 
-include('tests.php');
+// Maintenance/test routes: administrators only (were public).
+Route::middleware('admin.only')->group(function () {
+    require __DIR__ . '/tests.php';
+});
 
 
 
