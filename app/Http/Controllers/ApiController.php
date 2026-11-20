@@ -393,6 +393,10 @@ public function getWebHookTrip(Request $request)
         }
 
 
+            // TaxiCaller sends "start": "-" on some events (Job created / Job assigned).
+            // Keep $date/$time defined so the code below never hits an undefined variable.
+            $date = null;
+            $time = null;
             try {
                 $dateTime = !empty($trip['start'])
                     ? Carbon::createFromFormat('m/d/Y h:i A', $trip['start'])
@@ -573,8 +577,8 @@ public function getWebHookTrip(Request $request)
                 'order_id' => $order_id,
                 'stop_location' => $stops,
             ]);
-            $driver = Driver::where('driver_id', $trip['driverId'])->first();
-            if ($driver) {
+            $driver = Driver::where('driver_id', $trip['driverId'] ?? null)->first();
+            if ($driver && $date) {
                 $driver->last_trip_at = $date;
                 $driver->save();
             }
