@@ -180,7 +180,7 @@ class AccountChargeFailureLogger
     private static function classify(?\Throwable $ex, ?string $message, $trip, $account, $tripRef): array
     {
         if ($tripRef !== null && $tripRef !== '' && !$trip) {
-            return ['trip_not_found', $message ?: 'Trip not found.'];
+            return ['trip_not_found', 'Trip not found' . ($message ? ' (app replied: ' . $message . ')' : '.')];
         }
         if ($ex) {
             if ($ex instanceof \Illuminate\Database\QueryException) {
