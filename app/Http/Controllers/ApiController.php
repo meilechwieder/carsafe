@@ -425,6 +425,10 @@ public function getWebHookTrip(Request $request)
         }
 
         // --- Step 11: Find existing trip ---
+        // TaxiCaller can send two events for the same new trip at the same moment. If the other
+        // request inserts the trip first, our insert hits trips_trip_id_unique; we then loop once
+        // more so this event is applied as an update to the trip that now exists.
+        for ($webhookAttempt = 0; ; $webhookAttempt++) {
         $existingTrip = Trip::where('trip_id', $tripId)->first();
 
         // --- Step 12: Common clean values ---
@@ -553,6 +557,7 @@ public function getWebHookTrip(Request $request)
             $pickupCoords = GeoapifyService::getCoordinates($pickupLocation);
             $dropoffCoords = GeoapifyService::getCoordinates($dropoffLocation);
 
+            try {
             Trip::create([
                 'trip_id' => $tripId,
                 'location_from' => $pickupLocation,
@@ -577,6 +582,13 @@ public function getWebHookTrip(Request $request)
                 'order_id' => $order_id,
                 'stop_location' => $stops,
             ]);
+            } catch (\Illuminate\Database\QueryException $qe) {
+                // 1062 = duplicate key: the same trip was just created by a concurrent webhook.
+                if ($webhookAttempt === 0 && (int)($qe->errorInfo[1] ?? 0) === 1062) {
+                    continue;
+                }
+                throw $qe;
+            }
             $driver = Driver::where('driver_id', $trip['driverId'] ?? null)->first();
             if ($driver && $date) {
                 $driver->last_trip_at = $date;
@@ -586,6 +598,7 @@ public function getWebHookTrip(Request $request)
         }
 
         return response()->json('no action', 200);
+        }
     } catch (\Exception $e) {
         Log::error('trip-web-hook-error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         return response()->json(['error' => 'Internal server error'], 500);
