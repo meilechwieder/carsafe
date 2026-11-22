@@ -93,8 +93,8 @@ class AccountChargeFailureLogger
         }
         if (in_array('errors', $newFlash, true)) {
             $bag = $session->get('errors');
-            $message = ($bag && method_exists($bag, 'first')) ? $bag->first() : 'Validation error';
-            return [true, $message ?: 'Validation error', $status];
+            $message = self::firstFlashError($bag) ?: 'Validation error';
+            return [true, $message, $status];
         }
 
         return [$status !== null && $status >= 500, null, $status];
@@ -174,6 +174,24 @@ class AccountChargeFailureLogger
             'ip' => $request->ip(),
             'created_at' => now(),
         ]);
+    }
+
+    /** First message from a session "errors" flash (ViewErrorBag or MessageBag). */
+    private static function firstFlashError($bag): ?string
+    {
+        if ($bag instanceof \Illuminate\Support\ViewErrorBag) {
+            // ViewErrorBag::first() exists only via __call, so method_exists() is false.
+            $first = $bag->getBag('default')->first();
+            return is_string($first) && $first !== '' ? $first : null;
+        }
+        if (is_object($bag) && method_exists($bag, 'first')) {
+            $first = $bag->first();
+            return is_string($first) && $first !== '' ? $first : null;
+        }
+        if (is_string($bag) && $bag !== '') {
+            return $bag;
+        }
+        return null;
     }
 
     /** @return array{0: string, 1: string} */
