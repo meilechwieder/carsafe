@@ -116,7 +116,7 @@ class SyncTrips extends Command
                                 $ickedup = !empty($trip->{'icked up'}) ? date("Y-m-d H:i:s", strtotime($trip->{'icked up'})) : null;
                                 $existingTrip->update([
                                     'location_from' => $trip->{'route.pick_up_text'},
-                                    'location_to' => $to_location,
+                                    'location_to' => (!empty($trip->{'ts.delivered'}) && $trip->{'ts.delivered'} !== '-' && trim((string)$existingTrip->location_to) !== '') ? $existingTrip->location_to : $to_location, // CSF-1007: keep booked destination after completion
                                     'date' => $date,
                                     'time' => $time,
                                     'trip_cost' => !empty($trip->{'fx.trip_base'}) && $trip->{'fx.trip_base'} != 0 ? $trip->{'fx.trip_base'} : $trip->{'estimatedPrice'},

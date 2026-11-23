@@ -3046,7 +3046,7 @@ class TripController extends Controller
 
                             $existingTrip->update([
                                 'location_from' => $trip->{'route.pick_up_text'},
-                                'location_to' => $to_location,
+                                'location_to' => (!empty($trip->{'ts.delivered'}) && $trip->{'ts.delivered'} !== '-' && trim((string)$existingTrip->location_to) !== '') ? $existingTrip->location_to : $to_location, // CSF-1007: keep booked destination after completion
                                 'date' => $date,
                                 'time' => $time,
                                 'trip_cost' => !empty($trip->{'fx.grand_total'}) && $trip->{'fx.grand_total'} != 0
