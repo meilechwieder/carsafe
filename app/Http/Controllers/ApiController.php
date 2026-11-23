@@ -466,7 +466,10 @@ public function getWebHookTrip(Request $request)
         }
 
         if ($existingTrip) {
-            if (!empty($trip['driverId'])) {
+            // CSF-1008: only reassign the driver while the trip is still unpaid cash. Once a driver has
+            // collected payment (card/account, or payment in progress), later TaxiCaller events must not
+            // move the trip to another driver.
+            if (!empty($trip['driverId']) && $existingTrip->payment_method === 'cash' && empty($existingTrip->temp_data)) {
                 $existingTrip->driver_id = $trip['driverId'];
                 $existingTrip->save();
             }
