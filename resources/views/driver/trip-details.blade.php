@@ -140,6 +140,19 @@
                             <h6>{{ ($trip->payment_method == 'scn_card' || $trip->payment_method == 'gocab') ? 'SCN Card' : $trip->payment_method }}</h6>
                        </div>
                     </div>
+                    @php $pp = $trip->phonePayment; @endphp
+                    @if($pp)
+                    <div class="row ">
+                        <div class="col-6 b-primary">
+                            <h5>Paid by phone</h5>
+                      </div>
+                        <div class="col-6 pt-2 b-primary">
+                            <h6>${{ number_format((float) $pp->charged_amount, 2) }} ({{ $pp->methodLabel() }})</h6>
+                            <div>{{ $pp->paidAtLabel() }}</div>
+                            @if($pp->reference)<div>Ref: {{ $pp->reference }}</div>@endif
+                       </div>
+                    </div>
+                    @endif
                     <!-- <div class="row ">
                         <div class="col-6 b-primary">
                             <h5>Trip Account Number</h5>

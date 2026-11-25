@@ -209,6 +209,7 @@ class TripController extends Controller
                 ->orderBy('time', 'desc')
                 ->offset($offset)
                 ->limit(10)
+                ->with('phonePayment')
                 ->get();
 
             return view('driver.load_history', compact('trips'));
