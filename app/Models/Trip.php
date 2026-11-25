@@ -90,6 +90,12 @@ class Trip extends Model
 //    {
 //        return $this->hasMany(Payment::class, 'trip_id', 'trip_id')->where();
 //    }
+    // CSF-1009: latest phone (call-to-pay) payment for this trip, if any
+    public function phonePayment()
+    {
+        return $this->hasOne(PhonePayment::class, 'trip_id', 'trip_id')->latest('id');
+    }
+
     public function driver()
     {
         return $this->belongsTo(Driver::class, 'driver_id', 'driver_id');

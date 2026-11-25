@@ -222,6 +222,9 @@ Route::get('start-again/{id}', [TripController::class,'start_payment_again']);
 Route::group(['middleware' => 'driver.auth','as' => 'driver.'], function () {
 
     Route::get('/dashboard', [\App\Http\Controllers\DriverController::class, 'index'])->name('dashboard');
+    // CSF-1009: "Paid by phone" dashboard alerts
+    Route::get('/phone-payments/unseen', [\App\Http\Controllers\PhonePaymentController::class, 'driverUnseen'])->middleware('throttle:60,1');
+    Route::post('/phone-payments/seen', [\App\Http\Controllers\PhonePaymentController::class, 'driverSeen'])->middleware('throttle:60,1');
     Route::get('/single-trip/{id}', [TripController::class, 'show']);
 
     Route::get('/payment', [TripController::class, 'latestThree']);
@@ -266,6 +269,8 @@ Route::group(['middleware' => 'driver.auth','as' => 'driver.'], function () {
     Route::get('/driver/{id}', [\App\Http\Controllers\DriverController::class, 'driver']);
     Route::get('/taxidrivers', [\App\Http\Controllers\DriverController::class, 'taxidrivers']);
     Route::get('/account-invoice/{hash}', [\App\Http\Controllers\AccountController::class, 'invoiceViewOrPay'])->name('unauth.invoice.view');
+    // CSF-1009: receipt link texted to card payers after a phone payment
+    Route::get('/receipt/phone/{token}', [\App\Http\Controllers\PhonePaymentController::class, 'receipt'])->middleware('throttle:30,1')->name('phone.receipt');
     Route::post('/account-invoice/{hash}', [\App\Http\Controllers\AccountController::class, 'invoicePay'])->name('unauth.invoice.pay');
 
     Route::get('/checkwebhook/{id}', [TripController::class, 'checkwebhook']);

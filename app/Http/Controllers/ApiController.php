@@ -1170,6 +1170,8 @@ public function getWebHookTrip(Request $request)
 
                         $trip->update();
                         $pay_data = $this->addpay($trip, $request);
+                        // CSF-1009: driver/customer "Paid by phone" notice
+                        \App\Services\PhonePaymentNotice::recordAccount($trip, $account, $pay_data);
                         $tripId = $trip->trip_id;
                         $driverId = $trip->driver_id;
                         $extra_message = null;
@@ -1280,6 +1282,8 @@ public function getWebHookTrip(Request $request)
             $trip->update($data);
 
             $pay_data = $this->addpay($trip, $request);
+            // CSF-1009: driver "Paid by phone" notice + card payer receipt (card last 4 only)
+            $phonePayment = \App\Services\PhonePaymentNotice::recordCard($trip, $charge, $cardknoxAmount);
 
             $logdata = array();
             $logdata['from'] = 'driver';
@@ -1300,6 +1304,7 @@ public function getWebHookTrip(Request $request)
             LogService::saveLog($logdata);
             // $this->ifBalanceMinusAutoPaidAsAdmin($trip);
             DB::commit();
+            \App\Services\PhonePaymentNotice::sendCardReceipt($phonePayment, $trip);
 
             return response()->json([
                 'valid' => true,

@@ -215,7 +215,12 @@ if (!$record) {
                $weeklyInvoices[] = $invoices;
            }
 
-        return view('customer.index',compact('account', 'labels' ,'weeklyTripCounts' ,'weeklyInvoices' ,'weeklyComplaints'));
+        // CSF-1009: recent trips paid through the automated phone system
+        $phonePayments = \App\Models\PhonePayment::where('account_id', (string) $account->account_id)
+            ->where('created_at', '>=', now()->subDays(30))
+            ->orderByDesc('id')->limit(5)->get();
+
+        return view('customer.index',compact('account', 'labels' ,'weeklyTripCounts' ,'weeklyInvoices' ,'weeklyComplaints', 'phonePayments'));
 
     }
 
@@ -224,6 +229,7 @@ if (!$record) {
 
         if($request->ajax()) {
             $data = AccountService::GetTrips($request);
+            $phonePaid = null;
 
             return DataTables::of($data['trips'])
                 ->addIndexColumn()
@@ -232,10 +238,28 @@ if (!$record) {
                         return '';
                     }
                     return $row->cube_pin_status;
-                }) ->addColumn('action', function ($row) {
+                })
+                // CSF-1009: show "Paid by phone" next to the payment method
+                ->editColumn('payment_method', function ($row) use (&$phonePaid) {
+                    if ($phonePaid === null) {
+                        $phonePaid = [];
+                    }
+                    if (!array_key_exists($row->trip_id, $phonePaid)) {
+                        $phonePaid[$row->trip_id] = \App\Models\PhonePayment::where('trip_id', (string) $row->trip_id)
+                            ->where('method', 'account')->orderByDesc('id')->first();
+                    }
+                    $label = e($row->payment_method);
+                    $pp = $phonePaid[$row->trip_id];
+                    if ($pp) {
+                        $label .= '<br><span class="badge" style="background:#d1e7dd;color:#0f5132;">Paid by phone '
+                            . e($pp->paidAtLabel()) . ($pp->reference ? ' &middot; Ref: ' . e($pp->reference) : '') . '</span>';
+                    }
+                    return $label;
+                })
+                ->addColumn('action', function ($row) {
                     return '<button class="btn bg-orange-g b-r-8 text-white bg openTripModal" data-trip="' . $row->trip_id . '">Add Complaint</button>';
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'payment_method'])
                 ->make(true);
 
         }

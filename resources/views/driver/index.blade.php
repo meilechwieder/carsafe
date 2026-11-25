@@ -23,6 +23,7 @@
     </div>
     <!-- Container-fluid starts-->
     <div class="container-fluid">
+        @include('partials.phone-payment-alerts')
         <div class="row size-column">
             <div class="col-xl-3 risk-col xl-100 box-col-12">
                 <div class="card total-users">

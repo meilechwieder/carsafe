@@ -59,6 +59,17 @@
 
         </div>
         <div class="card-body pt-5 ">
+            {{-- CSF-1009: trips paid through the automated phone system --}}
+            @if(!empty($phonePayments) && $phonePayments->count())
+            <div class="alert" role="alert" style="background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;">
+                <strong>Paid by phone</strong>
+                <ul class="mb-0 mt-2" style="list-style:none;padding-left:0;">
+                    @foreach($phonePayments as $pp)
+                    <li>Trip #{{ $pp->trip_id }} &middot; ${{ number_format((float) $pp->charged_amount, 2) }} from your account &middot; {{ $pp->paidAtLabel() }}@if($pp->reference) &middot; Ref: {{ $pp->reference }}@endif</li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
 
             <div class="row">
             <!-- <div class="col-xl-4 col-lg-12 xl-50 morning-sec box-col-12">
